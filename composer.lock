@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "574e0637333ef6a2faa9325e26b6f2b4",
+    "content-hash": "eed8130d1568d10317ab71119369270d",
     "packages": [
         {
             "name": "aws/aws-crt-php",
@@ -830,7 +830,7 @@
             "time": "2024-07-08T12:26:09+00:00"
         },
         {
-            "name": "dg/adminer-custom",
+            "name": "dg/adminer",
             "version": "v3.3.1",
             "source": {
                 "type": "git",
