@@ -231,19 +231,15 @@ class User extends Authenticatable
         return $this->currentOrgRole() === UserRole::Demo;
     }
 
-    public function meetsMinimumRole(string $minimumRole): bool
+    public function meetsMinimumRole(UserRole $minimumRole): bool
     {
         if ($this->isSuperAdmin()) {
             return true;
         }
 
-        $roles = UserRole::assignable();
         $currentRole = $this->currentOrgRole();
 
-        $userIndex = $currentRole ? array_search($currentRole, $roles) : false;
-        $requiredIndex = array_search(UserRole::tryFrom($minimumRole), $roles);
-
-        return $userIndex !== false && $requiredIndex !== false && $userIndex >= $requiredIndex;
+        return $currentRole !== null && $currentRole->meetsMinimum($minimumRole);
     }
 
     public function isPending(): bool

@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Enums\UserRole;
 use App\Facades\AppConfig;
 use App\Models\DatabaseServer;
 use App\Models\User;
@@ -73,7 +74,9 @@ class DatabaseServerPolicy
             return false;
         }
 
-        return $user->meetsMinimumRole((string) AppConfig::get('app.adminer_role'));
+        $role = UserRole::tryFrom((string) AppConfig::get('app.adminer_role'));
+
+        return $role !== null && $user->meetsMinimumRole($role);
     }
 
     /**
