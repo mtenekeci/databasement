@@ -202,7 +202,7 @@ class User extends Authenticatable
     /**
      * Get the user's role in the current org context.
      */
-    private function currentOrgRole(): ?UserRole
+    public function currentOrgRole(): ?UserRole
     {
         return $this->roleIn(app(\App\Services\CurrentOrganization::class)->model());
     }
@@ -229,17 +229,6 @@ class User extends Authenticatable
     public function isDemo(): bool
     {
         return $this->currentOrgRole() === UserRole::Demo;
-    }
-
-    public function meetsMinimumRole(UserRole $minimumRole): bool
-    {
-        if ($this->isSuperAdmin()) {
-            return true;
-        }
-
-        $currentRole = $this->currentOrgRole();
-
-        return $currentRole !== null && $currentRole->meetsMinimum($minimumRole);
     }
 
     public function isPending(): bool

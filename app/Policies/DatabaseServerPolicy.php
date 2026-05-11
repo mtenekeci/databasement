@@ -74,9 +74,19 @@ class DatabaseServerPolicy
             return false;
         }
 
-        $role = UserRole::tryFrom((string) AppConfig::get('app.adminer_role'));
+        $requiredRole = UserRole::tryFrom((string) AppConfig::get('app.adminer_role'));
 
-        return $role !== null && $user->meetsMinimumRole($role);
+        if ($requiredRole === null) {
+            return false;
+        }
+
+        if ($user->isSuperAdmin()) {
+            return true;
+        }
+
+        $currentRole = $user->currentOrgRole();
+
+        return $currentRole !== null && $currentRole->meetsMinimum($requiredRole);
     }
 
     /**
