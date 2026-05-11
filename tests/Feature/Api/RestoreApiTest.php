@@ -15,7 +15,7 @@ test('unauthenticated users cannot trigger a restore', function () {
 });
 
 test('viewer users cannot trigger a restore', function () {
-    $user = User::factory()->create(['role' => User::ROLE_VIEWER]);
+    $user = User::factory()->viewer()->create();
     $server = DatabaseServer::factory()->create();
     $snapshot = Snapshot::factory()->forServer($server)->create();
 

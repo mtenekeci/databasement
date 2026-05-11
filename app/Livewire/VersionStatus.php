@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Traits\Toast;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
@@ -12,6 +13,8 @@ use Livewire\Component;
 #[Lazy]
 class VersionStatus extends Component
 {
+    use Toast;
+
     public bool $showModal = false;
 
     public string $dockerComposeCommand = "docker compose pull\ndocker compose up -d";
@@ -73,10 +76,21 @@ class VersionStatus extends Component
         $cached = Cache::get($cacheKey);
 
         if (is_string($cached)) {
-            $this->latestVersion = $cached === '' ? null : $cached;
-            $this->releaseUrl = $this->latestVersion ? $this->releaseUrl($this->latestVersion) : null;
+            $cachedVersion = $cached === '' ? null : $cached;
 
-            return;
+            // If the app version is newer than the cached latest, the cache is stale — re-fetch
+            if ($cachedVersion && $this->appVersion && version_compare(
+                ltrim($this->appVersion, 'v'),
+                ltrim($cachedVersion, 'v'),
+                '>'
+            )) {
+                Cache::forget($cacheKey);
+            } else {
+                $this->latestVersion = $cachedVersion;
+                $this->releaseUrl = $this->latestVersion ? $this->releaseUrl($this->latestVersion) : null;
+
+                return;
+            }
         }
 
         try {

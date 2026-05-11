@@ -14,6 +14,7 @@ test('can create database server', function (array $config) {
         'name' => 'Test Volume',
         'type' => 'local',
         'config' => ['path' => '/var/backups'],
+        'organization_id' => \App\Models\Organization::first()->id,
     ]);
 
     $component = Livewire::actingAs($user)
@@ -106,6 +107,7 @@ test('can create database server with retention policy', function (array $config
         'name' => 'Test Volume',
         'type' => 'local',
         'config' => ['path' => '/var/backups'],
+        'organization_id' => \App\Models\Organization::first()->id,
     ]);
 
     $component = Livewire::actingAs($user)
@@ -144,6 +146,7 @@ test('cannot create database server with GFS retention when all tiers are empty'
         'name' => 'GFS Validation Test Volume',
         'type' => 'local',
         'config' => ['path' => '/var/backups'],
+        'organization_id' => \App\Models\Organization::first()->id,
     ]);
 
     Livewire::actingAs($user)
@@ -262,6 +265,7 @@ test('can create database server with dump flags', function () {
         'name' => 'Test Volume',
         'type' => 'local',
         'config' => ['path' => '/var/backups'],
+        'organization_id' => \App\Models\Organization::first()->id,
     ]);
 
     Livewire::actingAs($user)
@@ -289,7 +293,7 @@ test('can create database server with dump flags', function () {
 
 test('local volume options reflect use_agent state', function (bool $useAgent, bool $expectedDisabled) {
     $user = User::factory()->create();
-    $localVolume = Volume::create(['name' => 'Local Vol', 'type' => 'local', 'config' => ['path' => '/backups']]);
+    $localVolume = Volume::create(['name' => 'Local Vol', 'type' => 'local', 'config' => ['path' => '/backups'], 'organization_id' => \App\Models\Organization::first()->id]);
 
     $component = Livewire::actingAs($user)
         ->test(Create::class)
@@ -306,7 +310,7 @@ test('local volume options reflect use_agent state', function (bool $useAgent, b
 
 test('toggling use_agent clears local volume but keeps remote volume', function (string $volumeType, array $volumeConfig, string $expectedVolumeId) {
     $user = User::factory()->create();
-    $volume = Volume::create(['name' => 'Test Vol', 'type' => $volumeType, 'config' => $volumeConfig]);
+    $volume = Volume::create(['name' => 'Test Vol', 'type' => $volumeType, 'config' => $volumeConfig, 'organization_id' => \App\Models\Organization::first()->id]);
 
     $expected = $expectedVolumeId === 'keep' ? $volume->id : '';
 
@@ -323,7 +327,7 @@ test('toggling use_agent clears local volume but keeps remote volume', function 
 test('cannot create agent-backed server with local volume', function () {
     $user = User::factory()->create();
     $agent = Agent::factory()->create();
-    $localVolume = Volume::create(['name' => 'Local Vol', 'type' => 'local', 'config' => ['path' => '/backups']]);
+    $localVolume = Volume::create(['name' => 'Local Vol', 'type' => 'local', 'config' => ['path' => '/backups'], 'organization_id' => \App\Models\Organization::first()->id]);
 
     Livewire::actingAs($user)
         ->test(Create::class)
@@ -349,6 +353,7 @@ test('backup summary is incomplete until volume and schedule are set, then rende
         'name' => 'Prod Backups',
         'type' => 'local',
         'config' => ['path' => '/var/backups'],
+        'organization_id' => \App\Models\Organization::first()->id,
     ]);
 
     $component = Livewire::actingAs($user)
@@ -425,6 +430,7 @@ test('backup summary reports incomplete when retention settings are blank', func
         'name' => 'Prod Backups',
         'type' => 'local',
         'config' => ['path' => '/var/backups'],
+        'organization_id' => \App\Models\Organization::first()->id,
     ]);
 
     $component = Livewire::actingAs($user)
@@ -465,11 +471,13 @@ test('can create a server with multiple backup configurations', function () {
         'name' => 'Primary Volume',
         'type' => 'local',
         'config' => ['path' => '/var/backups/primary'],
+        'organization_id' => \App\Models\Organization::first()->id,
     ]);
     $volume2 = Volume::create([
         'name' => 'Secondary Volume',
         'type' => 'local',
         'config' => ['path' => '/var/backups/secondary'],
+        'organization_id' => \App\Models\Organization::first()->id,
     ]);
     $daily = dailySchedule();
     $weekly = weeklySchedule();

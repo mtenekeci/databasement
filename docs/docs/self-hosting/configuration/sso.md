@@ -138,6 +138,16 @@ New users created via OAuth are assigned this role:
 OAUTH_DEFAULT_ROLE=member  # Options: viewer, member, admin
 ```
 
+### Default Organization
+
+By default, auto-created OAuth users join the default organization. To assign them to a different organization instead, set:
+
+```env
+OAUTH_DEFAULT_ORGANIZATION_ID=01JA2B3C4D5E6F7G8H9J0KMNPQ  # Organization ULID
+```
+
+You can find the organization ID in **Configuration > Organizations**. See the [Organizations guide](/user-guide/organizations) for more details on multi-org setups.
+
 ### Auto-Link by Email
 
 When enabled (default), OAuth logins are automatically linked to existing users with matching email addresses:

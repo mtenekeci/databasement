@@ -14,7 +14,7 @@ test('unauthenticated users cannot create database servers', function () {
 });
 
 test('viewers cannot create database servers', function () {
-    $user = User::factory()->create(['role' => 'viewer']);
+    $user = User::factory()->viewer()->create();
     $volume = Volume::factory()->local()->create();
     $schedule = BackupSchedule::firstOrCreate(['name' => 'Daily'], ['expression' => '0 2 * * *']);
 
@@ -239,7 +239,7 @@ test('unauthenticated users cannot update database servers', function () {
 });
 
 test('viewers cannot update database servers', function () {
-    $user = User::factory()->create(['role' => 'viewer']);
+    $user = User::factory()->viewer()->create();
     $server = DatabaseServer::factory()->create(['database_type' => 'mysql']);
     $volume = Volume::factory()->local()->create();
     $schedule = BackupSchedule::firstOrCreate(['name' => 'Daily'], ['expression' => '0 2 * * *']);
@@ -367,7 +367,7 @@ test('unauthenticated users cannot delete database servers', function () {
 });
 
 test('viewers cannot delete database servers', function () {
-    $user = User::factory()->create(['role' => 'viewer']);
+    $user = User::factory()->viewer()->create();
     $server = DatabaseServer::factory()->create();
 
     $this->actingAs($user, 'sanctum')

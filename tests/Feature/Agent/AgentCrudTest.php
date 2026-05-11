@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\UserRole;
 use App\Livewire\Agent\Create;
 use App\Livewire\Agent\Edit;
 use App\Livewire\Agent\Index;
@@ -49,7 +50,7 @@ describe('agent index', function () {
     });
 
     test('viewers cannot delete agents', function () {
-        $user = User::factory()->create(['role' => User::ROLE_VIEWER]);
+        $user = User::factory()->create(['role' => UserRole::Viewer]);
         $agent = Agent::factory()->create();
 
         Livewire::actingAs($user)
@@ -78,7 +79,7 @@ describe('agent creation', function () {
     });
 
     test('demo users cannot create agents', function () {
-        $user = User::factory()->create(['role' => User::ROLE_DEMO]);
+        $user = User::factory()->create(['role' => UserRole::Demo]);
 
         Livewire::actingAs($user)
             ->test(Create::class)
@@ -86,7 +87,7 @@ describe('agent creation', function () {
     });
 
     test('viewers cannot create agents', function () {
-        $user = User::factory()->create(['role' => User::ROLE_VIEWER]);
+        $user = User::factory()->create(['role' => UserRole::Viewer]);
 
         Livewire::actingAs($user)
             ->test(Create::class)
@@ -126,7 +127,7 @@ describe('agent editing', function () {
     });
 
     test('viewers cannot edit agents', function () {
-        $user = User::factory()->create(['role' => User::ROLE_VIEWER]);
+        $user = User::factory()->create(['role' => UserRole::Viewer]);
         $agent = Agent::factory()->create();
 
         Livewire::actingAs($user)

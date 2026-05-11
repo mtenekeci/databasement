@@ -204,11 +204,13 @@ describe('volume listing', function () {
             'name' => 'Local Volume',
             'type' => 'local',
             'config' => ['path' => '/var/backups'],
+            'organization_id' => \App\Models\Organization::first()->id,
         ]);
         Volume::create([
             'name' => 'S3 Volume',
             'type' => 's3',
             'config' => ['bucket' => 'my-bucket', 'prefix' => ''],
+            'organization_id' => \App\Models\Organization::first()->id,
         ]);
 
         Livewire::actingAs($user)
@@ -225,11 +227,13 @@ describe('volume listing', function () {
             'name' => 'Production Volume',
             'type' => 'local',
             'config' => ['path' => '/var/backups'],
+            'organization_id' => \App\Models\Organization::first()->id,
         ]);
         Volume::create([
             'name' => 'Development Volume',
             'type' => 's3',
             'config' => ['bucket' => 'dev-bucket', 'prefix' => ''],
+            'organization_id' => \App\Models\Organization::first()->id,
         ]);
 
         Livewire::actingAs($user)
@@ -247,6 +251,7 @@ describe('volume deletion', function () {
             'name' => 'Volume to Delete',
             'type' => 'local',
             'config' => ['path' => '/var/backups'],
+            'organization_id' => \App\Models\Organization::first()->id,
         ]);
 
         Livewire::actingAs($user)
@@ -400,6 +405,7 @@ describe('volume immutability', function () {
             'name' => 'Empty Volume',
             'type' => 'local',
             'config' => ['path' => '/var/backups'],
+            'organization_id' => \App\Models\Organization::first()->id,
         ]);
 
         // Verify volume has no snapshots
@@ -443,6 +449,7 @@ describe('connection testing', function () {
                 'password' => Crypt::encryptString('secret-password'),
                 'root' => '/uploads',
             ],
+            'organization_id' => \App\Models\Organization::first()->id,
         ]);
 
         // Mock the FilesystemProvider to verify the volume receives merged password

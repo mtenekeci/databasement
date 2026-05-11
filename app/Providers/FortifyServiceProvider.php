@@ -47,8 +47,8 @@ class FortifyServiceProvider extends ServiceProvider
                 return null;
             }
 
-            // Check if user is OAuth-only (no password set)
-            if ($user->isOAuthOnly()) {
+            // OAuth users must use the OAuth login button
+            if ($user->isOAuth()) {
                 throw ValidationException::withMessages([
                     Fortify::username() => [__('This account uses OAuth login. Please use the OAuth button below to sign in.')],
                 ]);
@@ -87,7 +87,7 @@ class FortifyServiceProvider extends ServiceProvider
         Fortify::twoFactorChallengeView(fn () => view('livewire.auth.two-factor-challenge'));
         Fortify::confirmPasswordView(function () {
             // OAuth-only users have no password to confirm
-            if (auth()->user()?->isOAuthOnly()) {
+            if (auth()->user()?->isOAuth()) {
                 abort(403, __('Password confirmation is not available for OAuth users.'));
             }
 

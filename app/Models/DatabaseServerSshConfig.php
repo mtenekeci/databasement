@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\Scopes\OrganizationScope;
 use Database\Factories\DatabaseServerSshConfigFactory;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 
@@ -35,6 +37,11 @@ class DatabaseServerSshConfig extends Model
     /** @var array<string> Sensitive fields that contain encrypted data */
     public const SENSITIVE_FIELDS = ['password', 'private_key', 'key_passphrase'];
 
+    protected static function booted(): void
+    {
+        static::addGlobalScope(new OrganizationScope);
+    }
+
     protected $fillable = [
         'host',
         'port',
@@ -43,6 +50,7 @@ class DatabaseServerSshConfig extends Model
         'password',
         'private_key',
         'key_passphrase',
+        'organization_id',
     ];
 
     protected $hidden = [
@@ -59,6 +67,14 @@ class DatabaseServerSshConfig extends Model
             'private_key' => 'encrypted',
             'key_passphrase' => 'encrypted',
         ];
+    }
+
+    /**
+     * @return BelongsTo<Organization, DatabaseServerSshConfig>
+     */
+    public function organization(): BelongsTo
+    {
+        return $this->belongsTo(Organization::class);
     }
 
     /**

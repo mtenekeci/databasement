@@ -7,6 +7,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Lazy;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
@@ -15,6 +16,7 @@ class JobStatusGrid extends Component
 {
     public bool $showLogsModal = false;
 
+    #[Locked]
     public ?string $selectedJobId = null;
 
     /**
@@ -23,7 +25,7 @@ class JobStatusGrid extends Component
     #[Computed]
     public function jobs(): Collection
     {
-        return BackupJob::query()
+        return BackupJob::forCurrentOrg()
             ->select(['id', 'status', 'duration_ms', 'created_at'])
             ->with([
                 'snapshot:id,backup_job_id,database_name,database_server_id' => [
@@ -72,7 +74,7 @@ class JobStatusGrid extends Component
             return null;
         }
 
-        return BackupJob::with([
+        return BackupJob::forCurrentOrg()->with([
             'snapshot.databaseServer',
             'snapshot.triggeredBy',
             'restore.snapshot.databaseServer',

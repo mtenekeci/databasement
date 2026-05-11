@@ -6,6 +6,7 @@ use App\Enums\DatabaseType;
 use App\Enums\NotificationChannelSelection;
 use App\Enums\NotificationTrigger;
 use App\Exceptions\Backup\EncryptionException;
+use App\Models\Scopes\OrganizationScope;
 use Database\Factories\DatabaseServerFactory;
 use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Database\Eloquent\Builder;
@@ -90,6 +91,8 @@ class DatabaseServer extends Model
 
     protected static function booted(): void
     {
+        static::addGlobalScope(new OrganizationScope);
+
         // Delete snapshots through Eloquent to trigger their deleting events
         // (which clean up associated BackupJobs, Restores, and backup files)
         static::deleting(function (DatabaseServer $server) {
@@ -121,6 +124,7 @@ class DatabaseServer extends Model
         'managed_by',
         'notification_trigger',
         'notification_channel_selection',
+        'organization_id',
     ];
 
     protected $hidden = [
@@ -138,6 +142,14 @@ class DatabaseServer extends Model
             'notification_trigger' => NotificationTrigger::class,
             'notification_channel_selection' => NotificationChannelSelection::class,
         ];
+    }
+
+    /**
+     * @return BelongsTo<Organization, DatabaseServer>
+     */
+    public function organization(): BelongsTo
+    {
+        return $this->belongsTo(Organization::class);
     }
 
     /**

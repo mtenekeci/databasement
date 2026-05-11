@@ -4,6 +4,7 @@ namespace App\Livewire\Forms;
 
 use App\Enums\VolumeType;
 use App\Models\Volume;
+use App\Services\CurrentOrganization;
 use App\Services\VolumeConnectionTester;
 use Illuminate\Validation\ValidationException;
 use Livewire\Component;
@@ -95,11 +96,15 @@ class VolumeForm extends Form
 
         $this->validate($rules);
 
-        Volume::create([
+        $data = [
             'name' => $this->name,
             'type' => $this->type,
             'config' => $this->buildConfig(),
-        ]);
+        ];
+
+        $data['organization_id'] = app(CurrentOrganization::class)->id();
+
+        Volume::create($data);
     }
 
     public function update(): void

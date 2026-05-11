@@ -14,7 +14,7 @@ test('unauthenticated users cannot trigger a backup', function () {
 });
 
 test('viewer users cannot trigger a backup', function () {
-    $user = User::factory()->create(['role' => User::ROLE_VIEWER]);
+    $user = User::factory()->viewer()->create();
     $server = DatabaseServer::factory()->create();
 
     $response = $this->actingAs($user, 'sanctum')

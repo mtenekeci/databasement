@@ -2,6 +2,7 @@
 
 namespace App\Services\Backup;
 
+use App\Models\Scopes\OrganizationScope;
 use App\Models\Snapshot;
 use App\Services\Backup\Filesystems\FilesystemProvider;
 use App\Services\NotificationService;
@@ -19,20 +20,28 @@ class SnapshotVerificationService
     ) {}
 
     /**
-     * Verify all completed snapshots still exist on their storage volumes.
+     * Verify completed snapshots still exist on their storage volumes.
      *
      * @return array{verified: int, missing: int}
      */
-    public function run(): array
+    public function run(?string $organizationId = null): array
     {
         $this->newlyMissing = collect();
         $verified = 0;
 
-        $snapshotIds = Snapshot::query()
+        $query = Snapshot::query()
             ->whereNotNull('filename')
             ->where('filename', '!=', '')
-            ->whereRelation('job', 'status', 'completed')
-            ->pluck('id');
+            ->whereRelation('job', 'status', 'completed');
+
+        if ($organizationId) {
+            $query->whereHas('databaseServer', function ($sq) use ($organizationId) {
+                $sq->withoutGlobalScope(OrganizationScope::class)
+                    ->whereRaw('organization_id = ?', [$organizationId]);
+            });
+        }
+
+        $snapshotIds = $query->pluck('id');
 
         foreach ($snapshotIds as $id) {
             $this->verifySnapshot($id);

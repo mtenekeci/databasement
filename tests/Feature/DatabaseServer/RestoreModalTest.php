@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\UserRole;
 use App\Jobs\ProcessRestoreJob;
 use App\Livewire\DatabaseServer\Index;
 use App\Livewire\DatabaseServer\RestoreModal;
@@ -13,7 +14,7 @@ use Livewire\Livewire;
 use function Pest\Laravel\actingAs;
 
 beforeEach(function () {
-    $this->user = User::factory()->create(['role' => 'admin']);
+    $this->user = User::factory()->create(['role' => UserRole::Admin]);
     actingAs($this->user);
 
     // Mock DatabaseProvider to prevent real connection attempts in loadExistingDatabases()

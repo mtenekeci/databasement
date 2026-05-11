@@ -32,7 +32,7 @@ class SuccessRateCard extends Component
     {
         $thirtyDaysAgo = Carbon::now()->subDays(30);
 
-        $counts = BackupJob::query()
+        $counts = BackupJob::forCurrentOrg()
             ->toBase()
             ->where('created_at', '>=', $thirtyDaysAgo)
             ->whereIn('status', ['completed', 'failed'])
@@ -48,7 +48,7 @@ class SuccessRateCard extends Component
             $this->successRate = round(($completed / $total) * 100, 1);
         }
 
-        $this->runningJobs = BackupJob::where('status', 'running')->count();
+        $this->runningJobs = BackupJob::forCurrentOrg()->where('status', 'running')->count();
     }
 
     public function placeholder(): View

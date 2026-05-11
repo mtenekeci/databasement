@@ -11,9 +11,13 @@ use App\Services\Backup\Filesystems\FtpFilesystem;
 use App\Services\Backup\Filesystems\LocalFilesystem;
 use App\Services\Backup\Filesystems\SftpFilesystem;
 use App\Services\Backup\ShellProcessor;
+use App\Services\CurrentOrganization;
 use Dedoc\Scramble\Scramble;
 use Dedoc\Scramble\Support\Generator\OpenApi;
+use Dedoc\Scramble\Support\Generator\Parameter;
+use Dedoc\Scramble\Support\Generator\Schema;
 use Dedoc\Scramble\Support\Generator\SecurityScheme;
+use Dedoc\Scramble\Support\Generator\Types\StringType;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
@@ -30,6 +34,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->registerOAuthServicesConfig();
 
+        $this->app->singleton(CurrentOrganization::class);
         $this->app->singleton(AppConfigService::class);
         $this->app->singleton(ShellProcessor::class);
         $this->app->singleton(CompressorFactory::class);
@@ -95,6 +100,16 @@ class AppServiceProvider extends ServiceProvider
                 $openApi->secure(
                     SecurityScheme::http('bearer')
                 );
+
+                $orgParam = Parameter::make('org_id', 'query')
+                    ->description('Organization ID. If omitted, the main organization is used.')
+                    ->setSchema(Schema::fromType(new StringType));
+
+                foreach ($openApi->paths as $path) {
+                    foreach ($path->operations as $operation) {
+                        $operation->addParameters([$orgParam]);
+                    }
+                }
             });
     }
 
@@ -144,7 +159,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function performOAuthValidation(): void
     {
-        $validRoles = ['viewer', 'member', 'admin'];
+        $validRoles = array_map(fn (\App\Enums\UserRole $r) => $r->value, \App\Enums\UserRole::assignable());
         $defaultRole = config('oauth.default_role');
 
         if ($defaultRole && ! in_array($defaultRole, $validRoles)) {
@@ -176,9 +191,13 @@ class AppServiceProvider extends ServiceProvider
         // Validate role mapping: strict mode requires at least one mapping (only when OIDC is enabled)
         if (config('oauth.providers.oidc.enabled', false)) {
             $roleMapping = config('oauth.role_mapping', []);
-            $hasMapping = trim((string) ($roleMapping['admin'] ?? '')) !== ''
-                || trim((string) ($roleMapping['member'] ?? '')) !== ''
-                || trim((string) ($roleMapping['viewer'] ?? '')) !== '';
+            $hasMapping = false;
+            foreach (\App\Enums\UserRole::assignable() as $role) {
+                if (trim((string) ($roleMapping[$role->value] ?? '')) !== '') {
+                    $hasMapping = true;
+                    break;
+                }
+            }
 
             if (! empty($roleMapping['strict']) && ! $hasMapping) {
                 throw new \InvalidArgumentException(

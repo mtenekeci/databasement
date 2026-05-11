@@ -72,7 +72,7 @@ test('unauthenticated users cannot create volumes', function () {
 });
 
 test('viewers cannot create volumes', function () {
-    $user = User::factory()->create(['role' => 'viewer']);
+    $user = User::factory()->viewer()->create();
 
     $this->actingAs($user, 'sanctum')
         ->postJson('/api/v1/volumes/local', [
@@ -133,7 +133,7 @@ test('unauthenticated users cannot delete volumes', function () {
 });
 
 test('viewers cannot delete volumes', function () {
-    $user = User::factory()->create(['role' => 'viewer']);
+    $user = User::factory()->viewer()->create();
     $volume = Volume::factory()->create();
 
     $this->actingAs($user, 'sanctum')

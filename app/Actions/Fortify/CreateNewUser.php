@@ -2,6 +2,8 @@
 
 namespace App\Actions\Fortify;
 
+use App\Enums\UserRole;
+use App\Models\Organization;
 use App\Models\User;
 use App\Services\DemoBackupService;
 use Illuminate\Support\Facades\Log;
@@ -46,13 +48,23 @@ class CreateNewUser implements CreatesNewUsers
 
         $createDemoBackup = ! empty($input['create_demo_backup']);
 
+        // Ensure default org exists (migration creates it, but handle fresh install)
+        $defaultOrg = Organization::firstOrCreate(
+            ['is_default' => true],
+            ['name' => 'Default']
+        );
+
+        // First user is always super_admin
         $user = User::create([
             'name' => $input['name'],
             'email' => $input['email'],
             'password' => $input['password'],
-            'role' => User::ROLE_ADMIN, // First user is always admin
+            'super_admin' => true,
             'invitation_accepted_at' => now(),
         ]);
+
+        // Attach to main org as admin
+        $user->organizations()->attach($defaultOrg->id, ['role' => UserRole::Admin->value]);
 
         if ($createDemoBackup) {
             try {

@@ -4,15 +4,16 @@ sidebar_position: 6
 
 # Permissions
 
-Databasement uses a role-based access control system with three user roles. Each role has different permissions for managing resources.
+Databasement uses a role-based access control system. Roles are assigned **per organization** — a user can have different roles in different organizations. See [Organizations](./organizations.md) for details on multi-org setup.
 
 ## User Roles
 
-| Role       | Description                                                                |
-|------------|----------------------------------------------------------------------------|
-| **Admin**  | Full access to all features including user management                      |
-| **Member** | Can manage database servers, volumes, and backups, but cannot manage users |
-| **Viewer** | Read-only access to view resources and monitor backup status               |
+| Role            | Scope  | Description                                                                |
+|-----------------|--------|----------------------------------------------------------------------------|
+| **Super Admin** | Global | Full access to all organizations, user deletion, and global configuration  |
+| **Admin**       | Org    | Full access within the org, including user management                      |
+| **Member**      | Org    | Can manage database servers, volumes, and backups, but cannot manage users |
+| **Viewer**      | Org    | Read-only access to view resources and monitor backup status               |
 
 ## Permissions by Resource
 
@@ -47,19 +48,30 @@ Databasement uses a role-based access control system with three user roles. Each
 
 ### Users
 
-| Action               | Viewer | Member | Admin |
-|----------------------|:------:|:------:|:-----:|
-| View list            |   ✅    |   ✅    |   ✅   |
-| Invite new user      |   ❌    |   ❌    |   ✅   |
-| Edit user role       |   ❌    |   ❌    |   ✅   |
-| Delete user          |   ❌    |   ❌    |   ✅   |
-| Copy invitation link |   ❌    |   ❌    |   ✅   |
+| Action                       | Viewer | Member | Admin |
+|------------------------------|:------:|:------:|:-----:|
+| View list                    |   ✅    |   ✅    |   ✅   |
+| Invite new user              |   ❌    |   ❌    |   ✅   |
+| Edit user role               |   ❌    |   ❌    |   ✅   |
+| Delete user                  |   ❌    |   ❌    |   ✅*  |
+| Remove from organization     |   ❌    |   ❌    |   ✅   |
+| Copy invitation link         |   ❌    |   ❌    |   ✅   |
+
+\* Org admins can only delete users who belong to their organization and no other. See restrictions below.
 
 ## Special Rules
 
-### User Deletion Restrictions
+### User Deletion
 
-Even admins have some restrictions when deleting users:
+**Super admins** can delete any user, with these restrictions:
 
-- **Cannot delete yourself**: An admin cannot delete their own account
-- **Cannot delete the last admin**: The system must always have at least one admin user
+- Cannot delete yourself
+- Cannot delete the last super admin
+
+**Org admins** can delete a user only when all of the following are true:
+
+- The target user is not a super admin
+- The target user belongs to the admin's current organization
+- The target user belongs to **only one organization** (the admin's org)
+
+If the target user belongs to multiple organizations, admins can **remove them from the organization** instead of deleting them entirely.

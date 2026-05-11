@@ -24,7 +24,7 @@ class BackupJobQuery
      */
     public static function make(): QueryBuilder
     {
-        return QueryBuilder::for(BackupJob::class)
+        return QueryBuilder::for(BackupJob::query()->forCurrentOrg())
             ->with(self::RELATIONSHIPS)
             ->allowedFilters(
                 AllowedFilter::exact('status'),
@@ -65,7 +65,11 @@ class BackupJobQuery
     ): Builder {
         $query = BackupJob::query()
             ->with(self::RELATIONSHIPS)
-            ->addSelect('backup_jobs.*')
+            ->addSelect('backup_jobs.*');
+
+        $query->forCurrentOrg();
+
+        $query
             ->addSelect([
                 'snapshot_size' => Snapshot::select('file_size')
                     ->whereColumn('backup_job_id', 'backup_jobs.id')

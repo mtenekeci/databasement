@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\UserRole;
 use App\Livewire\DatabaseServer\Edit;
 use App\Models\Backup;
 use App\Models\DatabaseServer;
@@ -15,12 +16,14 @@ test('can edit database server', function (array $config) {
         'name' => 'Test Volume',
         'type' => 'local',
         'config' => ['path' => '/var/backups'],
+        'organization_id' => \App\Models\Organization::first()->id,
     ]);
     $schedule = dailySchedule();
 
     $serverData = [
         'name' => $config['name'],
         'database_type' => $config['type'],
+        'organization_id' => \App\Models\Organization::first()->id,
     ];
 
     $backupDatabaseNames = null;
@@ -100,6 +103,7 @@ test('can change retention policy', function (array $config) {
         'name' => 'Test Volume',
         'type' => 'local',
         'config' => ['path' => '/var/backups'],
+        'organization_id' => \App\Models\Organization::first()->id,
     ]);
     $schedule = dailySchedule();
 
@@ -110,6 +114,7 @@ test('can change retention policy', function (array $config) {
         'port' => 3306,
         'username' => 'dbuser',
         'password' => 'secret',
+        'organization_id' => \App\Models\Organization::first()->id,
     ]);
 
     // Start with forever retention (no specific retention days)
@@ -249,7 +254,7 @@ test('pattern mode filters available databases and auto-loads on switch', functi
 });
 
 test('admin can select notification channels for a database server', function () {
-    $admin = User::factory()->create(['role' => 'admin']);
+    $admin = User::factory()->create(['role' => UserRole::Admin]);
 
     $email = NotificationChannel::factory()->email()->create(['name' => 'Zebra Alerts']);
     $slack = NotificationChannel::factory()->slack()->create(['name' => 'Alpha Slack']);
@@ -281,7 +286,7 @@ test('admin can select notification channels for a database server', function ()
 });
 
 test('selected notification channel selection requires at least one channel', function (string $trigger) {
-    $admin = User::factory()->create(['role' => 'admin']);
+    $admin = User::factory()->create(['role' => UserRole::Admin]);
     NotificationChannel::factory()->email()->create();
     $server = DatabaseServer::factory()->create(['database_names' => ['myapp']]);
 
@@ -299,7 +304,7 @@ test('selected notification channel selection requires at least one channel', fu
 ]);
 
 test('notification channel selection is not required when trigger is disabled', function () {
-    $admin = User::factory()->create(['role' => 'admin']);
+    $admin = User::factory()->create(['role' => UserRole::Admin]);
     NotificationChannel::factory()->email()->create();
     $server = DatabaseServer::factory()->create(['database_names' => ['myapp']]);
 

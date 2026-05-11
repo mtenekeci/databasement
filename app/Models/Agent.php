@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Scopes\OrganizationScope;
 use Database\Factories\AgentFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 use Laravel\Sanctum\HasApiTokens;
@@ -40,9 +42,15 @@ class Agent extends Model
     /** @use HasFactory<AgentFactory> */
     use HasApiTokens, HasFactory, HasUlids;
 
+    protected static function booted(): void
+    {
+        static::addGlobalScope(new OrganizationScope);
+    }
+
     protected $fillable = [
         'name',
         'last_heartbeat_at',
+        'organization_id',
     ];
 
     protected function casts(): array
@@ -50,6 +58,14 @@ class Agent extends Model
         return [
             'last_heartbeat_at' => 'datetime',
         ];
+    }
+
+    /**
+     * @return BelongsTo<Organization, Agent>
+     */
+    public function organization(): BelongsTo
+    {
+        return $this->belongsTo(Organization::class);
     }
 
     /**

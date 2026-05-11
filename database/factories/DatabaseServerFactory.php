@@ -5,6 +5,7 @@ namespace Database\Factories;
 use App\Enums\DatabaseSelectionMode;
 use App\Models\Backup;
 use App\Models\DatabaseServerSshConfig;
+use App\Models\Organization;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -32,6 +33,7 @@ class DatabaseServerFactory extends Factory
             'description' => fake()->optional()->sentence(),
             'notification_trigger' => 'failure',
             'notification_channel_selection' => 'all',
+            'organization_id' => fn () => Organization::first()?->id ?? Organization::factory()->default(),
         ];
     }
 

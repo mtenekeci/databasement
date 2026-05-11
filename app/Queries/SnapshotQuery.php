@@ -57,8 +57,12 @@ class SnapshotQuery
         string $sortColumn = 'started_at',
         string $sortDirection = 'desc'
     ): Builder {
-        return Snapshot::query()
-            ->with(self::RELATIONSHIPS)
+        $query = Snapshot::query()
+            ->with(self::RELATIONSHIPS);
+
+        $query->forCurrentOrg();
+
+        return $query
             ->when($search, function (Builder $query) use ($search) {
                 self::applySearch($query, $search);
             })

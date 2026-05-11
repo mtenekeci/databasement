@@ -4,6 +4,7 @@ namespace App\Livewire\Dashboard;
 
 use App\Jobs\VerifySnapshotFileJob;
 use App\Models\Snapshot;
+use App\Services\CurrentOrganization;
 use App\Traits\Toast;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Cache;
@@ -36,7 +37,7 @@ class SnapshotsCard extends Component
 
     private function loadData(): void
     {
-        $baseQuery = Snapshot::whereRelation('job', 'status', 'completed');
+        $baseQuery = Snapshot::forCurrentOrg()->whereRelation('job', 'status', 'completed');
 
         $this->totalSnapshots = $baseQuery->count();
         $this->verifiedSnapshots = (clone $baseQuery)->whereNotNull('file_verified_at')->count();
@@ -52,7 +53,9 @@ class SnapshotsCard extends Component
     {
         abort_unless(auth()->user()->isAdmin(), Response::HTTP_FORBIDDEN);
 
-        $lock = Cache::lock('verify-snapshot-files', 300);
+        $currentOrg = app(CurrentOrganization::class);
+        $lockKey = 'verify-snapshot-files:'.$currentOrg->id();
+        $lock = Cache::lock($lockKey, 300);
 
         if (! $lock->get()) {
             $this->warning(__('File verification is already running.'));
@@ -60,7 +63,7 @@ class SnapshotsCard extends Component
             return;
         }
 
-        VerifySnapshotFileJob::dispatch();
+        VerifySnapshotFileJob::dispatch($currentOrg->id());
 
         $this->success(__('File verification job dispatched.'));
     }

@@ -14,6 +14,7 @@ use App\Models\DatabaseServerSshConfig;
 use App\Models\NotificationChannel;
 use App\Services\Backup\Databases\DatabaseProvider;
 use App\Services\Backup\SyncBackupConfigurationsAction;
+use App\Services\CurrentOrganization;
 use App\Services\SshTunnelService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -881,6 +882,8 @@ class DatabaseServerForm extends Form
         $serverData['ssh_config_id'] = $this->createOrUpdateSshConfig();
         DatabaseServer::buildExtraConfig($serverData);
 
+        $serverData['organization_id'] = app(CurrentOrganization::class)->id();
+
         DB::transaction(function () use ($serverData): void {
             $server = DatabaseServer::create($serverData);
             $this->syncBackupConfigurations($server);
@@ -996,7 +999,8 @@ class DatabaseServerForm extends Form
             }
         }
 
-        // Create new config
+        $sshData['organization_id'] = app(CurrentOrganization::class)->id();
+
         return DatabaseServerSshConfig::create($sshData)->id;
     }
 

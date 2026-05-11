@@ -17,6 +17,7 @@ test('can create database server with SSH tunnel (password auth)', function () {
         'name' => 'Test Volume',
         'type' => 'local',
         'config' => ['path' => '/var/backups'],
+        'organization_id' => \App\Models\Organization::first()->id,
     ]);
 
     Livewire::actingAs($user)
@@ -65,6 +66,7 @@ test('can create database server with SSH tunnel (key auth)', function () {
         'name' => 'Test Volume',
         'type' => 'local',
         'config' => ['path' => '/var/backups'],
+        'organization_id' => \App\Models\Organization::first()->id,
     ]);
 
     $privateKey = "-----BEGIN OPENSSH PRIVATE KEY-----\ntest_key_content\n-----END OPENSSH PRIVATE KEY-----";
@@ -108,6 +110,7 @@ test('can create database server using existing SSH config', function () {
         'name' => 'Test Volume',
         'type' => 'local',
         'config' => ['path' => '/var/backups'],
+        'organization_id' => \App\Models\Organization::first()->id,
     ]);
 
     // Create existing SSH config
@@ -189,6 +192,7 @@ test('can create SQLite server with SSH config for remote access', function () {
         'name' => 'Test Volume',
         'type' => 'local',
         'config' => ['path' => '/var/backups'],
+        'organization_id' => \App\Models\Organization::first()->id,
     ]);
 
     Livewire::actingAs($user)

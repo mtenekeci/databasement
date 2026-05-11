@@ -2,7 +2,9 @@
 
 namespace App\Livewire\User;
 
+use App\Enums\UserRole;
 use App\Models\User;
+use App\Services\CurrentOrganization;
 use App\Traits\Toast;
 use Illuminate\Contracts\View\View;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -34,9 +36,23 @@ class Index extends Component
 
     public bool $showDeleteModal = false;
 
+    public string $deleteBlockReason = '';
+
+    #[Locked]
+    public ?int $removeId = null;
+
+    public bool $showRemoveModal = false;
+
+    public string $removeBlockReason = '';
+
     public bool $showCopyModal = false;
 
     public string $invitationUrl = '';
+
+    public function mount(): void
+    {
+        $this->authorize('viewAny', User::class);
+    }
 
     public function updatingSearch(): void
     {
@@ -79,11 +95,10 @@ class Index extends Component
      */
     public function roleFilterOptions(): array
     {
-        return [
-            ['id' => User::ROLE_ADMIN, 'name' => __('Admin')],
-            ['id' => User::ROLE_MEMBER, 'name' => __('Member')],
-            ['id' => User::ROLE_VIEWER, 'name' => __('Viewer')],
-        ];
+        return array_map(fn (UserRole $role) => [
+            'id' => $role->value,
+            'name' => $role->label(),
+        ], UserRole::assignable());
     }
 
     /**
@@ -114,6 +129,7 @@ class Index extends Component
         $this->authorize('delete', $user);
 
         $this->deleteId = $id;
+        $this->deleteBlockReason = $this->getDeleteBlockReason($user);
         $this->showDeleteModal = true;
     }
 
@@ -127,6 +143,10 @@ class Index extends Component
 
         $this->authorize('delete', $user);
 
+        if ($this->getDeleteBlockReason($user) !== '') {
+            return;
+        }
+
         $user->delete();
         $this->deleteId = null;
         $this->showDeleteModal = false;
@@ -134,17 +154,80 @@ class Index extends Component
         $this->success(__('User deleted successfully.'));
     }
 
+    public function confirmRemoveFromOrg(int $id): void
+    {
+        $user = User::findOrFail($id);
+
+        $this->authorize('removeFromOrganization', $user);
+
+        $this->removeId = $id;
+        $this->removeBlockReason = $this->getRemoveBlockReason($user);
+        $this->showRemoveModal = true;
+    }
+
+    public function removeFromOrg(): void
+    {
+        if (! $this->removeId) {
+            return;
+        }
+
+        $user = User::findOrFail($this->removeId);
+
+        $this->authorize('removeFromOrganization', $user);
+
+        if ($this->getRemoveBlockReason($user) !== '') {
+            return;
+        }
+
+        $currentOrg = app(CurrentOrganization::class);
+        $user->organizations()->detach($currentOrg->id());
+
+        $this->removeId = null;
+        $this->showRemoveModal = false;
+
+        $this->success(__('User removed from organization.'));
+    }
+
+    private function getDeleteBlockReason(User $user): string
+    {
+        if ($user->isSuperAdmin() && User::where('super_admin', true)->count() === 1) {
+            return __('This is the only super admin account. It cannot be deleted.');
+        }
+
+        if (! auth()->user()->isSuperAdmin() && $user->organizations()->count() > 1) {
+            return __('This user belongs to multiple organizations. Remove them from this organization instead.');
+        }
+
+        return '';
+    }
+
+    private function getRemoveBlockReason(User $user): string
+    {
+        if ($user->organizations()->count() <= 1) {
+            return __('This user only belongs to this organization. Removing them would leave them without access.');
+        }
+
+        return '';
+    }
+
     public function render(): View
     {
-        $users = User::query()
+        $currentOrg = app(CurrentOrganization::class);
+
+        $query = User::query();
+
+        $query->whereRelation('organizations', 'organization_id', $currentOrg->id());
+
+        $users = $query
+            ->with('organizations')
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
                     $q->where('name', 'like', '%'.$this->search.'%')
                         ->orWhere('email', 'like', '%'.$this->search.'%');
                 });
             })
-            ->when($this->roleFilter !== '', function ($query) {
-                $query->where('role', $this->roleFilter);
+            ->when($this->roleFilter !== '', function ($query) use ($currentOrg) {
+                $query->whereHas('organizations', fn ($q) => $q->whereRaw('organization_id = ? and role = ?', [$currentOrg->id(), $this->roleFilter]));
             })
             ->when($this->statusFilter !== '', function ($query) {
                 if ($this->statusFilter === 'active') {
@@ -161,6 +244,7 @@ class Index extends Component
             'headers' => $this->headers(),
             'roleFilterOptions' => $this->roleFilterOptions(),
             'statusFilterOptions' => $this->statusFilterOptions(),
+            'canManageOrgMembership' => auth()->user()->can('manageOrgMembership', User::class),
         ]);
     }
 }

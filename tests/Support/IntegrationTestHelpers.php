@@ -98,6 +98,7 @@ class IntegrationTestHelpers
             'name' => "Integration Test Volume ({$type})",
             'type' => 'local',
             'config' => ['root' => $storageDir],
+            'organization_id' => \App\Models\Organization::first()->id,
         ]);
     }
 
@@ -119,6 +120,7 @@ class IntegrationTestHelpers
                 'root' => '/config/backups',
                 'timeout' => 10,
             ],
+            'organization_id' => \App\Models\Organization::first()->id,
         ]);
     }
 
@@ -145,6 +147,7 @@ class IntegrationTestHelpers
             $serverData['extra_config'] = ['auth_source' => $config['auth_source']];
         }
 
+        $serverData['organization_id'] = \App\Models\Organization::first()->id;
         $server = DatabaseServer::create($serverData);
         $server->pendingBackupState['database_names'] = [$config['database']];
 
@@ -278,6 +281,7 @@ class IntegrationTestHelpers
             'username' => $config['username'],
             'password' => $config['password'],
             'description' => 'Integration test Redis server',
+            'organization_id' => \App\Models\Organization::first()->id,
         ]);
     }
 
@@ -307,6 +311,7 @@ class IntegrationTestHelpers
             'name' => 'Integration Test SQLite Server',
             'database_type' => 'sqlite',
             'description' => 'Integration test SQLite database',
+            'organization_id' => \App\Models\Organization::first()->id,
         ]);
 
         $server->pendingBackupState['database_names'] = [$sqlitePath];
@@ -369,6 +374,7 @@ class IntegrationTestHelpers
             'username' => $ssh['username'],
             'auth_type' => 'password',
             'password' => $ssh['password'],
+            'organization_id' => \App\Models\Organization::first()->id,
         ]);
     }
 
@@ -401,6 +407,7 @@ class IntegrationTestHelpers
             'password' => $dbConfig['password'],
             'description' => "Integration test {$type} database server via SSH tunnel",
             'ssh_config_id' => $sshConfig->id,
+            'organization_id' => \App\Models\Organization::first()->id,
         ]);
         $server->pendingBackupState['database_names'] = [$dbConfig['database']];
 

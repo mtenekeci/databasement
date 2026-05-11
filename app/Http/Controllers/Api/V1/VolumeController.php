@@ -12,6 +12,7 @@ use App\Http\Requests\Api\V1\Volume\StoreVolumeRequest;
 use App\Http\Resources\VolumeResource;
 use App\Models\Volume;
 use App\Queries\VolumeQuery;
+use App\Services\CurrentOrganization;
 use App\Services\VolumeConnectionTester;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
@@ -120,6 +121,7 @@ class VolumeController extends Controller
         $volumeType = VolumeType::from($validated['type']);
 
         $validated['config'] = $volumeType->encryptSensitiveFields($validated['config']);
+        $validated['organization_id'] = app(CurrentOrganization::class)->id();
 
         $volume = Volume::create($validated);
 

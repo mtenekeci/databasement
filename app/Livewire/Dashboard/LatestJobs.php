@@ -6,6 +6,7 @@ use App\Models\BackupJob;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
 use Livewire\Attributes\Lazy;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
@@ -19,6 +20,7 @@ class LatestJobs extends Component
 
     public bool $showLogsModal = false;
 
+    #[Locked]
     public ?string $selectedJobId = null;
 
     public function mount(): void
@@ -61,7 +63,7 @@ class LatestJobs extends Component
             return null;
         }
 
-        return BackupJob::with([
+        return BackupJob::forCurrentOrg()->with([
             'snapshot.databaseServer',
             'snapshot.triggeredBy',
             'restore.snapshot.databaseServer',
@@ -72,7 +74,7 @@ class LatestJobs extends Component
 
     public function fetchJobs(): void
     {
-        $query = BackupJob::query()
+        $query = BackupJob::forCurrentOrg()
             ->with([
                 'snapshot.databaseServer',
                 'restore.targetServer',

@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Organization;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -24,6 +25,7 @@ class DatabaseServerSshConfigFactory extends Factory
             'password' => 'ssh_password',
             'private_key' => null,
             'key_passphrase' => null,
+            'organization_id' => fn () => Organization::first()?->id ?? Organization::factory()->default(),
         ];
     }
 

@@ -11,7 +11,7 @@ test('creates demo backup for sqlite database', function () {
     // This mirrors the production scenario where the app uses SQLite
     config(['database.connections.sqlite.database' => '/data/database.sqlite']);
 
-    $service = new DemoBackupService;
+    $service = app(DemoBackupService::class);
     $databaseServer = $service->createDemoBackup('sqlite');
 
     expect($databaseServer)->toBeInstanceOf(DatabaseServer::class)
@@ -36,7 +36,7 @@ test('creates demo backup for mysql database', function () {
         'password' => 'secret',
     ]]);
 
-    $service = new DemoBackupService;
+    $service = app(DemoBackupService::class);
     $databaseServer = $service->createDemoBackup('mysql');
 
     expect($databaseServer)->toBeInstanceOf(DatabaseServer::class)
@@ -60,7 +60,7 @@ test('creates demo backup for postgresql database', function () {
         'password' => 'secret',
     ]]);
 
-    $service = new DemoBackupService;
+    $service = app(DemoBackupService::class);
     $databaseServer = $service->createDemoBackup('pgsql');
 
     expect($databaseServer)->toBeInstanceOf(DatabaseServer::class)
@@ -74,6 +74,6 @@ test('creates demo backup for postgresql database', function () {
 });
 
 test('throws exception for unsupported database type', function () {
-    $service = new DemoBackupService;
+    $service = app(DemoBackupService::class);
     $service->createDemoBackup('mongodb');
 })->throws(RuntimeException::class, 'Unsupported database connection: mongodb');

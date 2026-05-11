@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\UserRole;
 use App\Facades\AppConfig;
 use App\Jobs\ProcessBackupJob;
 use App\Livewire\DatabaseServer\Index;
@@ -14,7 +15,7 @@ beforeEach(function () {
 });
 
 test('runBackup triggers backup for a specific backup configuration', function () {
-    $user = User::factory()->create(['role' => User::ROLE_ADMIN]);
+    $user = User::factory()->create(['role' => UserRole::Admin]);
     $server = DatabaseServer::factory()->withoutBackups()->create();
     $backup = Backup::factory()->for($server)->selected(['test_db'])->create();
 
@@ -26,7 +27,7 @@ test('runBackup triggers backup for a specific backup configuration', function (
 });
 
 test('runBackup includes backup display label in success toast', function () {
-    $user = User::factory()->create(['role' => User::ROLE_ADMIN]);
+    $user = User::factory()->create(['role' => UserRole::Admin]);
     $server = DatabaseServer::factory()->withoutBackups()->create();
     $backup = Backup::factory()->for($server)->selected(['test_db'])->create();
 
@@ -39,7 +40,7 @@ test('runBackup includes backup display label in success toast', function () {
 });
 
 test('runBackup fails with authorization error if user is viewer', function () {
-    $user = User::factory()->create(['role' => User::ROLE_VIEWER]);
+    $user = User::factory()->create(['role' => UserRole::Viewer]);
     $server = DatabaseServer::factory()->withoutBackups()->create();
     $backup = Backup::factory()->for($server)->selected(['test_db'])->create();
 
@@ -52,7 +53,7 @@ test('runBackup fails with authorization error if user is viewer', function () {
 // --- openAdminer ---
 
 test('openAdminer is forbidden when adminer is disabled', function () {
-    $user = User::factory()->create(['role' => User::ROLE_ADMIN]);
+    $user = User::factory()->create(['role' => UserRole::Admin]);
     $server = DatabaseServer::factory()->withoutBackups()->create(['database_type' => 'mysql']);
 
     Livewire::actingAs($user)
@@ -65,7 +66,7 @@ test('openAdminer is forbidden for users below required role', function () {
     AppConfig::set('app.adminer_enabled', true);
     AppConfig::set('app.adminer_role', 'admin');
 
-    $user = User::factory()->create(['role' => User::ROLE_MEMBER]);
+    $user = User::factory()->create(['role' => UserRole::Member]);
     $server = DatabaseServer::factory()->withoutBackups()->create(['database_type' => 'mysql']);
 
     Livewire::actingAs($user)
@@ -78,7 +79,7 @@ test('openAdminer dispatches modal for users meeting required role', function ()
     AppConfig::set('app.adminer_enabled', true);
     AppConfig::set('app.adminer_role', 'member');
 
-    $user = User::factory()->create(['role' => User::ROLE_MEMBER]);
+    $user = User::factory()->create(['role' => UserRole::Member]);
     $server = DatabaseServer::factory()->withoutBackups()->create(['database_type' => 'mysql']);
 
     Livewire::actingAs($user)
@@ -90,7 +91,7 @@ test('openAdminer dispatches modal for users meeting required role', function ()
 test('openAdminer is forbidden for unsupported database types', function (string $factoryState) {
     AppConfig::set('app.adminer_enabled', true);
 
-    $user = User::factory()->create(['role' => User::ROLE_ADMIN]);
+    $user = User::factory()->create(['role' => UserRole::Admin]);
     $server = DatabaseServer::factory()->{$factoryState}()->withoutBackups()->create();
 
     Livewire::actingAs($user)
@@ -105,7 +106,7 @@ test('openAdminer is forbidden for unsupported database types', function (string
 test('openAdminer is forbidden for servers using SSH', function () {
     AppConfig::set('app.adminer_enabled', true);
 
-    $user = User::factory()->create(['role' => User::ROLE_ADMIN]);
+    $user = User::factory()->create(['role' => UserRole::Admin]);
     $server = DatabaseServer::factory()->withSshTunnel()->withoutBackups()->create(['database_type' => 'mysql']);
 
     Livewire::actingAs($user)

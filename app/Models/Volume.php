@@ -3,12 +3,14 @@
 namespace App\Models;
 
 use App\Enums\VolumeType;
+use App\Models\Scopes\OrganizationScope;
 use Database\Factories\VolumeFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Crypt;
@@ -49,6 +51,8 @@ class Volume extends Model
 
     protected static function booted(): void
     {
+        static::addGlobalScope(new OrganizationScope);
+
         // Delete snapshots through Eloquent to trigger their deleting events
         // (which clean up associated BackupJobs, Restores, and backup files)
         // Type is immutable after creation — changing it would leave ghost config fields.
@@ -70,6 +74,7 @@ class Volume extends Model
         'name',
         'type',
         'config',
+        'organization_id',
     ];
 
     protected function casts(): array
@@ -77,6 +82,14 @@ class Volume extends Model
         return [
             'config' => 'array',
         ];
+    }
+
+    /**
+     * @return BelongsTo<Organization, Volume>
+     */
+    public function organization(): BelongsTo
+    {
+        return $this->belongsTo(Organization::class);
     }
 
     /**

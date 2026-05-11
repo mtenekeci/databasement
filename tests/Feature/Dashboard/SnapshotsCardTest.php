@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\UserRole;
 use App\Jobs\VerifySnapshotFileJob;
 use App\Livewire\Dashboard\SnapshotsCard;
 use App\Models\DatabaseServer;
@@ -79,7 +80,7 @@ test('snapshots card shows all verified when no snapshots are missing', function
 test('verify files button dispatches verification job', function () {
     Queue::fake();
 
-    $admin = User::factory()->create(['role' => 'admin']);
+    $admin = User::factory()->create(['role' => UserRole::Admin]);
 
     Livewire::withoutLazyLoading()
         ->actingAs($admin)
@@ -92,9 +93,10 @@ test('verify files button dispatches verification job', function () {
 test('verify files button prevents rapid re-dispatch via cache lock', function () {
     Queue::fake();
 
-    $admin = User::factory()->create(['role' => 'admin']);
+    $admin = User::factory()->create(['role' => UserRole::Admin]);
 
-    Cache::lock('verify-snapshot-files', 300)->get();
+    $org = \App\Models\Organization::default();
+    Cache::lock('verify-snapshot-files:'.$org->id, 300)->get();
 
     Livewire::withoutLazyLoading()
         ->actingAs($admin)

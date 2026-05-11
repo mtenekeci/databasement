@@ -11,6 +11,8 @@ use RuntimeException;
 
 class DemoBackupService
 {
+    public function __construct(private readonly CurrentOrganization $currentOrganization) {}
+
     /**
      * Create a demo backup configuration for the application's own database.
      *
@@ -37,6 +39,7 @@ class DemoBackupService
             'config' => [
                 'path' => '/data/backups',
             ],
+            'organization_id' => $this->currentOrganization->id(),
         ]);
 
         // Create database server entry based on type
@@ -45,6 +48,7 @@ class DemoBackupService
                 'name' => 'Databasement Database',
                 'database_type' => 'sqlite',
                 'description' => 'Demo database',
+                'organization_id' => $this->currentOrganization->id(),
             ]);
             $backupDatabaseNames = [$dbConfig['database']];
         } else {
@@ -56,6 +60,7 @@ class DemoBackupService
                 'username' => $dbConfig['username'] ?? '',
                 'password' => $dbConfig['password'] ?? '',
                 'description' => 'Demo database',
+                'organization_id' => $this->currentOrganization->id(),
             ]);
             $backupDatabaseNames = [$dbConfig['database'] ?? 'databasement'];
         }

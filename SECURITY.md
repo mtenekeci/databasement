@@ -5,7 +5,7 @@
 If you discover a security vulnerability in Databasement, please report it responsibly:
 
 1. **Do not** open a public GitHub issue for security vulnerabilities
-2. Email the details to the maintainers (include steps to reproduce if possible)
+2. Use [GitHub's private vulnerability reporting](https://github.com/David-Crty/databasement/security/advisories/new) to submit the details (include steps to reproduce if possible)
 3. Allow reasonable time for a fix before public disclosure
 
 We appreciate your help in keeping Databasement secure.

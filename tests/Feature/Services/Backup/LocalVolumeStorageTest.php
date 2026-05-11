@@ -39,6 +39,7 @@ test('getForVolume supports both root and path config keys for local filesystem'
         'name' => 'Volume with root key',
         'type' => 'local',
         'config' => ['root' => $tempDir],
+        'organization_id' => \App\Models\Organization::first()->id,
     ]);
 
     $filesystem = $this->filesystemProvider->getForVolume($volumeWithRoot);
@@ -51,6 +52,7 @@ test('getForVolume supports both root and path config keys for local filesystem'
         'name' => 'Volume with path key',
         'type' => 'local',
         'config' => ['path' => $tempDir],
+        'organization_id' => \App\Models\Organization::first()->id,
     ]);
 
     $filesystem2 = $this->filesystemProvider->getForVolume($volumeWithPath);

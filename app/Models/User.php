@@ -3,10 +3,12 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Enums\UserRole;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\DatabaseNotification;
@@ -29,7 +31,7 @@ use Laravel\Sanctum\HasApiTokens;
  * @property string|null $two_factor_secret
  * @property string|null $two_factor_recovery_codes
  * @property string|null $two_factor_confirmed_at
- * @property string $role
+ * @property bool $super_admin
  * @property string|null $invitation_token
  * @property Carbon|null $invitation_accepted_at
  * @property-read DatabaseNotificationCollection<int, DatabaseNotification> $notifications
@@ -38,6 +40,8 @@ use Laravel\Sanctum\HasApiTokens;
  * @property-read int|null $triggered_snapshots_count
  * @property-read Collection<int, OAuthIdentity> $oauthIdentities
  * @property-read int|null $oauth_identities_count
+ * @property-read Collection<int, Organization> $organizations
+ * @property-read int|null $organizations_count
  *
  * @method static Builder<static>|User active()
  * @method static UserFactory factory($count = null, $state = [])
@@ -54,7 +58,7 @@ use Laravel\Sanctum\HasApiTokens;
  * @method static Builder<static>|User whereName($value)
  * @method static Builder<static>|User wherePassword($value)
  * @method static Builder<static>|User whereRememberToken($value)
- * @method static Builder<static>|User whereRole($value)
+ * @method static Builder<static>|User whereSuperAdmin($value)
  * @method static Builder<static>|User whereTwoFactorConfirmedAt($value)
  * @method static Builder<static>|User whereTwoFactorRecoveryCodes($value)
  * @method static Builder<static>|User whereTwoFactorSecret($value)
@@ -70,32 +74,6 @@ class User extends Authenticatable
     /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, Notifiable, TwoFactorAuthenticatable;
 
-    public const ROLE_DEMO = 'demo';
-
-    public const ROLE_VIEWER = 'viewer';
-
-    public const ROLE_MEMBER = 'member';
-
-    public const ROLE_ADMIN = 'admin';
-
-    public const ROLES = [
-        self::ROLE_DEMO,
-        self::ROLE_VIEWER,
-        self::ROLE_MEMBER,
-        self::ROLE_ADMIN,
-    ];
-
-    public static function roleIcon(string $role): string
-    {
-        return match ($role) {
-            self::ROLE_ADMIN => 'o-shield-check',
-            self::ROLE_MEMBER => 'o-pencil-square',
-            self::ROLE_VIEWER => 'o-eye',
-            self::ROLE_DEMO => 'o-beaker',
-            default => 'o-user',
-        };
-    }
-
     /**
      * The attributes that are mass assignable.
      *
@@ -105,7 +83,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'role',
+        'super_admin',
         'invitation_token',
         'invitation_accepted_at',
     ];
@@ -132,9 +110,13 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'super_admin' => 'boolean',
             'invitation_accepted_at' => 'datetime',
         ];
     }
+
+    /** Transient property used by UserFactory to propagate the pivot role. */
+    public ?UserRole $pendingPivotRole = null;
 
     /**
      * Get the user's initials
@@ -164,24 +146,79 @@ class User extends Authenticatable
         return $this->hasMany(OAuthIdentity::class);
     }
 
-    public function isDemo(): bool
+    /**
+     * @return BelongsToMany<Organization, User>
+     */
+    public function organizations(): BelongsToMany
     {
-        return $this->role === self::ROLE_DEMO;
+        return $this->belongsToMany(Organization::class)->withPivot('role')->withTimestamps();
     }
 
-    public function isViewer(): bool
+    public function isSuperAdmin(): bool
     {
-        return $this->role === self::ROLE_VIEWER;
+        return $this->super_admin;
     }
 
-    public function isMember(): bool
+    /** @var array<string, UserRole|null> */
+    private array $cachedRoles = [];
+
+    /**
+     * @return $this
+     */
+    public function refresh(): static
     {
-        return $this->role === self::ROLE_MEMBER;
+        $this->cachedRoles = [];
+
+        return parent::refresh();
+    }
+
+    /**
+     * Get the user's role in a specific organization.
+     */
+    public function roleIn(Organization $organization): ?UserRole
+    {
+        if (! isset($this->cachedRoles[$organization->id])) {
+            if ($this->relationLoaded('organizations')) {
+                $match = $this->organizations->firstWhere('id', $organization->id);
+                $pivotRole = $match?->pivot?->role; // @phpstan-ignore property.notFound
+            } else {
+                $pivot = $this->organizations()->wherePivot('organization_id', $organization->id)->first();
+                $pivotRole = $pivot?->pivot?->role; // @phpstan-ignore property.notFound
+            }
+            $this->cachedRoles[$organization->id] = $pivotRole ? UserRole::tryFrom($pivotRole) : null;
+        }
+
+        return $this->cachedRoles[$organization->id];
+    }
+
+    /**
+     * Check if user belongs to a given organization.
+     */
+    public function belongsToOrganization(Organization $organization): bool
+    {
+        return $this->organizations()->wherePivot('organization_id', $organization->id)->exists();
+    }
+
+    /**
+     * Get the user's role in the current org context.
+     */
+    private function currentOrgRole(): ?UserRole
+    {
+        return $this->roleIn(app(\App\Services\CurrentOrganization::class)->model());
     }
 
     public function isAdmin(): bool
     {
-        return $this->role === self::ROLE_ADMIN;
+        return $this->isSuperAdmin() || $this->currentOrgRole() === UserRole::Admin;
+    }
+
+    public function canPerformActions(): bool
+    {
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+
+        return in_array($this->currentOrgRole(), [UserRole::Admin, UserRole::Member]);
     }
 
     public function canManageUsers(): bool
@@ -189,15 +226,22 @@ class User extends Authenticatable
         return $this->isAdmin();
     }
 
-    public function canPerformActions(): bool
+    public function isDemo(): bool
     {
-        return ! $this->isViewer() && ! $this->isDemo();
+        return $this->currentOrgRole() === UserRole::Demo;
     }
 
     public function meetsMinimumRole(string $minimumRole): bool
     {
-        $userIndex = array_search($this->role, self::ROLES);
-        $requiredIndex = array_search($minimumRole, self::ROLES);
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+
+        $roles = UserRole::assignable();
+        $currentRole = $this->currentOrgRole();
+
+        $userIndex = $currentRole ? array_search($currentRole, $roles) : false;
+        $requiredIndex = array_search(UserRole::tryFrom($minimumRole), $roles);
 
         return $userIndex !== false && $requiredIndex !== false && $userIndex >= $requiredIndex;
     }
@@ -213,11 +257,11 @@ class User extends Authenticatable
     }
 
     /**
-     * Check if user authenticated only via OAuth (no password set).
+     * Check if user authenticated via OAuth.
      */
-    public function isOAuthOnly(): bool
+    public function isOAuth(): bool
     {
-        return $this->password === null;
+        return $this->oauthIdentities()->exists();
     }
 
     public function generateInvitationToken(): string

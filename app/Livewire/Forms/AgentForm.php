@@ -3,6 +3,7 @@
 namespace App\Livewire\Forms;
 
 use App\Models\Agent;
+use App\Services\CurrentOrganization;
 use Livewire\Form;
 
 class AgentForm extends Form
@@ -33,6 +34,7 @@ class AgentForm extends Form
 
         return Agent::create([
             'name' => $this->name,
+            'organization_id' => app(CurrentOrganization::class)->id(),
         ]);
     }
 

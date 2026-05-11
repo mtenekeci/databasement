@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Organization;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -22,6 +23,7 @@ class VolumeFactory extends Factory
             'config' => [
                 'path' => $this->createTempDirectory(),
             ],
+            'organization_id' => fn () => Organization::first()?->id ?? Organization::factory()->default(),
         ];
     }
 

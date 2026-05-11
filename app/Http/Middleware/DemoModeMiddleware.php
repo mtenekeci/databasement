@@ -2,6 +2,8 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\UserRole;
+use App\Models\Organization;
 use App\Models\User;
 use Closure;
 use Illuminate\Http\Request;
@@ -48,17 +50,21 @@ class DemoModeMiddleware
 
     /**
      * Create the demo user if it doesn't exist.
+     * Attaches to main org with demo role.
      */
     protected function ensureDemoUserExists(): void
     {
-        User::firstOrCreate(
+        $user = User::firstOrCreate(
             ['email' => config('app.demo_user_email')],
             [
                 'name' => 'Demo User',
                 'password' => bcrypt(config('app.demo_user_password')),
-                'role' => User::ROLE_DEMO,
                 'invitation_accepted_at' => now(),
             ]
         );
+
+        $user->organizations()->syncWithoutDetaching([
+            Organization::default()->id => ['role' => UserRole::Demo->value],
+        ]);
     }
 }

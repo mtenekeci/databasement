@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\UserRole;
 use App\Livewire\ApiToken\Index;
 use App\Models\User;
 use Livewire\Livewire;
@@ -36,8 +37,8 @@ test('can revoke an existing token', function () {
 });
 
 test('regular user cannot revoke another users token', function () {
-    $owner = User::factory()->create(['role' => User::ROLE_MEMBER]);
-    $otherUser = User::factory()->create(['role' => User::ROLE_MEMBER]);
+    $owner = User::factory()->create(['role' => UserRole::Member]);
+    $otherUser = User::factory()->create(['role' => UserRole::Member]);
     $token = $owner->createToken('Owner Token');
     $tokenId = $token->accessToken->id;
 
@@ -52,8 +53,8 @@ test('regular user cannot revoke another users token', function () {
 });
 
 test('admin can revoke any users token', function () {
-    $owner = User::factory()->create(['role' => User::ROLE_MEMBER]);
-    $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+    $owner = User::factory()->create(['role' => UserRole::Member]);
+    $admin = User::factory()->create(['role' => UserRole::Admin]);
     $token = $owner->createToken('Owner Token');
     $tokenId = $token->accessToken->id;
 
@@ -66,8 +67,8 @@ test('admin can revoke any users token', function () {
 });
 
 test('admin sees all tokens with user info', function () {
-    $admin = User::factory()->create(['name' => 'Alice', 'role' => User::ROLE_ADMIN]);
-    $member = User::factory()->create(['name' => 'Bob', 'role' => User::ROLE_MEMBER]);
+    $admin = User::factory()->create(['name' => 'Alice', 'role' => UserRole::Admin]);
+    $member = User::factory()->create(['name' => 'Bob', 'role' => UserRole::Member]);
     $admin->createToken('Alice Token');
     $member->createToken('Bob Token');
 
@@ -82,8 +83,8 @@ test('admin sees all tokens with user info', function () {
 });
 
 test('non-admin only sees own tokens', function () {
-    $admin = User::factory()->create(['name' => 'Alice', 'role' => User::ROLE_ADMIN]);
-    $member = User::factory()->create(['name' => 'Bob', 'role' => User::ROLE_MEMBER]);
+    $admin = User::factory()->create(['name' => 'Alice', 'role' => UserRole::Admin]);
+    $member = User::factory()->create(['name' => 'Bob', 'role' => UserRole::Member]);
     $admin->createToken('Alice Token');
     $member->createToken('Bob Token');
 

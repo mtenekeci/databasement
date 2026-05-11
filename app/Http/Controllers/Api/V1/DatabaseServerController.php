@@ -16,6 +16,7 @@ use App\Services\Backup\BackupJobFactory;
 use App\Services\Backup\Databases\DatabaseProvider;
 use App\Services\Backup\SyncBackupConfigurationsAction;
 use App\Services\Backup\TriggerBackupAction;
+use App\Services\CurrentOrganization;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -71,6 +72,8 @@ class DatabaseServerController extends Controller
         }
 
         DatabaseServer::buildExtraConfig($validated);
+
+        $validated['organization_id'] = app(CurrentOrganization::class)->id();
 
         $server = DatabaseServer::create($validated);
         $this->syncBackupConfigurations($server, $backupsPayload, $hasBackupsPayload);

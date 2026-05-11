@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Contracts\BackupLogger;
+use App\Models\Scopes\OrganizationScope;
+use App\Services\CurrentOrganization;
 use App\Support\Formatters;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
@@ -65,6 +67,28 @@ class BackupJob extends Model implements BackupLogger
             'duration_ms' => 'integer',
             'logs' => 'array',
         ];
+    }
+
+    /**
+     * Scope to filter backup jobs by the current organization.
+     *
+     * @param  Builder<static>  $query
+     * @return Builder<static>
+     */
+    public function scopeForCurrentOrg(Builder $query): Builder
+    {
+        $orgId = app(CurrentOrganization::class)->id();
+
+        return $query->where(function (Builder $q) use ($orgId) {
+            $q->whereHas('snapshot.databaseServer', function (Builder $sq) use ($orgId) {
+                $sq->withoutGlobalScope(OrganizationScope::class)
+                    ->whereRaw('organization_id = ?', [$orgId]);
+            })
+                ->orWhereHas('restore.targetServer', function (Builder $sq) use ($orgId) {
+                    $sq->withoutGlobalScope(OrganizationScope::class)
+                        ->whereRaw('organization_id = ?', [$orgId]);
+                });
+        });
     }
 
     /**

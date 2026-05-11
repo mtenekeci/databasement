@@ -54,7 +54,7 @@ test('unauthenticated users cannot create backup schedules', function () {
 });
 
 test('viewers cannot create backup schedules', function () {
-    $user = User::factory()->create(['role' => 'viewer']);
+    $user = User::factory()->viewer()->create();
 
     $this->actingAs($user, 'sanctum')
         ->postJson('/api/v1/backup-schedules', [
@@ -124,7 +124,7 @@ test('unauthenticated users cannot update backup schedules', function () {
 });
 
 test('viewers cannot update backup schedules', function () {
-    $user = User::factory()->create(['role' => 'viewer']);
+    $user = User::factory()->viewer()->create();
     $schedule = BackupSchedule::factory()->create();
 
     $this->actingAs($user, 'sanctum')
@@ -183,7 +183,7 @@ test('unauthenticated users cannot delete backup schedules', function () {
 });
 
 test('viewers cannot delete backup schedules', function () {
-    $user = User::factory()->create(['role' => 'viewer']);
+    $user = User::factory()->viewer()->create();
     $schedule = BackupSchedule::factory()->create();
 
     $this->actingAs($user, 'sanctum')

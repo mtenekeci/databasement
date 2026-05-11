@@ -20,7 +20,7 @@ class JobsActivityChart extends Component
         $days = 14;
         $startDate = Carbon::now()->subDays($days - 1)->startOfDay();
 
-        $jobs = BackupJob::where('created_at', '>=', $startDate)
+        $jobs = BackupJob::forCurrentOrg()->where('created_at', '>=', $startDate)
             ->get()
             ->groupBy(fn ($job) => $job->created_at->format('Y-m-d'));
 

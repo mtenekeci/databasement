@@ -2,8 +2,8 @@
 
 namespace App\Livewire\Forms;
 
+use App\Enums\UserRole;
 use App\Facades\AppConfig;
-use App\Models\User;
 use Cron\CronExpression;
 use Illuminate\Validation\Rule;
 use Livewire\Form;
@@ -61,7 +61,7 @@ class ConfigurationForm extends Form
     {
         return [
             'adminer_enabled' => ['boolean'],
-            'adminer_role' => ['required', 'string', Rule::in([User::ROLE_ADMIN, User::ROLE_MEMBER, User::ROLE_VIEWER])],
+            'adminer_role' => ['required', 'string', Rule::in(array_column(UserRole::assignable(), 'value'))],
         ];
     }
 

@@ -16,12 +16,18 @@ use App\Support\FilesystemSupport;
 
 pest()->extend(Tests\TestCase::class)
     ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
-    ->beforeEach(fn () => dailySchedule())
+    ->beforeEach(function () {
+        dailySchedule();
+        setupOrgContext();
+    })
     ->in('Feature');
 
 pest()->extend(Tests\TestCase::class)
     ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
-    ->beforeEach(fn () => dailySchedule())
+    ->beforeEach(function () {
+        dailySchedule();
+        setupOrgContext();
+    })
     ->group('integration')
     ->in('Integration');
 
@@ -86,6 +92,23 @@ expect()->extend('toBeOne', function () {
 | global functions to help you to reduce the number of lines of code in your test files.
 |
 */
+
+/**
+ * Create the main organization and set it as the current org context.
+ * This ensures OrganizationScope and CurrentOrganization work in tests.
+ */
+function setupOrgContext(): \App\Models\Organization
+{
+    $org = \App\Models\Organization::firstOrCreate(
+        ['is_default' => true],
+        ['name' => 'Default'],
+    );
+
+    $currentOrg = app(\App\Services\CurrentOrganization::class);
+    $currentOrg->set($org);
+
+    return $org;
+}
 
 function dailySchedule(): \App\Models\BackupSchedule
 {

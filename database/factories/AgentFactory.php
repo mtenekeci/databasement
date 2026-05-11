@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\Organization;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -18,6 +19,7 @@ class AgentFactory extends Factory
     {
         return [
             'name' => fake()->company().' Agent',
+            'organization_id' => fn () => Organization::first()?->id ?? Organization::factory()->default(),
         ];
     }
 
