@@ -33,6 +33,12 @@
                     <x-config-row :label="__('Database Browser Role')" :description="__('Minimum role required to access the database browser.')">
                         <x-select wire:model="form.adminer_role" :options="$adminerRoleOptions" :disabled="!$this->isAdmin" />
                     </x-config-row>
+
+                    <div class="px-1 py-3">
+                        <x-alert class="alert-warning" icon="o-exclamation-triangle">
+                            {{ __('Users will have the same permissions as the database connection user configured on each server. Ensure connection users have appropriate privilege levels.') }}
+                        </x-alert>
+                    </div>
                 @endif
             </div>
 

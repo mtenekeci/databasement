@@ -78,18 +78,21 @@ class AdminerService
     }
 
     /**
-     * Register a non-locking session handler so Adminer's session_start()
-     * doesn't block concurrent requests (navigations, sub-resources).
-     * The default file handler uses flock(), causing timeouts when
-     * multiple Adminer requests overlap for the same session.
+     * Register a non-locking session handler backed by Laravel's cache store
+     * so Adminer's session_start() doesn't block concurrent requests and
+     * works across multiple pods/containers (unlike the default file handler).
      */
     private function useNonLockingSessionHandler(): void
     {
-        $savePath = ini_get('session.save_path') ?: sys_get_temp_dir();
+        $cache = cache()->store();
+        $ttl = (int) config('session.lifetime', 120) * 60;
 
-        session_set_save_handler(new class($savePath) implements \SessionHandlerInterface
+        session_set_save_handler(new class($cache, $ttl) implements \SessionHandlerInterface
         {
-            public function __construct(private string $savePath) {}
+            public function __construct(
+                private \Illuminate\Contracts\Cache\Repository $cache,
+                private int $ttl,
+            ) {}
 
             public function open(string $path, string $name): bool
             {
@@ -103,38 +106,22 @@ class AdminerService
 
             public function read(string $id): string
             {
-                $file = $this->savePath.'/sess_'.$id;
-
-                return (string) @file_get_contents($file);
+                return (string) $this->cache->get('adminer_session:'.$id, '');
             }
 
             public function write(string $id, string $data): bool
             {
-                $file = $this->savePath.'/sess_'.$id;
-
-                return file_put_contents($file, $data) !== false;
+                return $this->cache->put('adminer_session:'.$id, $data, $this->ttl);
             }
 
             public function destroy(string $id): bool
             {
-                $file = $this->savePath.'/sess_'.$id;
-                if (file_exists($file)) {
-                    @unlink($file);
-                }
-
-                return true;
+                return $this->cache->forget('adminer_session:'.$id);
             }
 
             public function gc(int $max_lifetime): int
             {
-                $files = glob($this->savePath.'/sess_*') ?: [];
-                foreach ($files as $file) {
-                    if (filemtime($file) + $max_lifetime < time()) {
-                        @unlink($file);
-                    }
-                }
-
-                return 0;
+                return 0; // Cache TTL handles expiry
             }
         });
     }
